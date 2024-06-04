@@ -1,13 +1,18 @@
-use std::path::PathBuf;
+use std::path::{PathBuf};
 
 use clap::{crate_name, crate_version, App, AppSettings, Arg};
 use humansize::file_size_opts::{self, FileSizeOpts};
 use humansize::FileSize;
-use num_format::{Locale, ToFormattedString};
 
 use diskus::{Error, FilesizeType, Walk};
 
-fn print_result(size: u64, errors: &[Error], size_format: &FileSizeOpts, verbose: bool) {
+fn print_result(
+    path: String,
+    size: u64,
+    errors: &[Error],
+    size_format: &FileSizeOpts,
+    verbose: bool,
+) {
     if verbose {
         for err in errors {
             match err {
@@ -31,15 +36,7 @@ fn print_result(size: u64, errors: &[Error], size_format: &FileSizeOpts, verbose
         );
     }
 
-    if atty::is(atty::Stream::Stdout) {
-        println!(
-            "{} ({:} bytes)",
-            size.file_size(size_format).unwrap(),
-            size.to_formatted_string(&Locale::en)
-        );
-    } else {
-        println!("{}", size);
-    }
+    println!("{:<12} {}", size.file_size(size_format).unwrap(), path);
 }
 
 fn main() {
@@ -100,10 +97,10 @@ fn main() {
         .and_then(|t| t.parse().ok())
         .unwrap_or(3 * num_cpus::get());
 
-    let paths: Vec<PathBuf> = matches
+    let paths: Vec<String> = matches
         .values_of("path")
-        .map(|paths| paths.map(PathBuf::from).collect())
-        .unwrap_or_else(|| vec![PathBuf::from(".")]);
+        .map(|paths| paths.map(String::from).collect())
+        .unwrap_or_else(|| vec![String::from(".")]);
 
     let filesize_type = if matches.is_present("apparent-size") {
         FilesizeType::ApparentSize
@@ -118,7 +115,12 @@ fn main() {
 
     let verbose = matches.is_present("verbose");
 
-    let walk = Walk::new(&paths, num_threads, filesize_type);
-    let (size, errors) = walk.run();
-    print_result(size, &errors, &size_format, verbose);
+    for path in paths {
+        let mut a: Vec<PathBuf> = Vec::new();
+        let p: String = String::from(&path);
+        a.push(PathBuf::from(path));
+        let walk = Walk::new(&a, num_threads, filesize_type);
+        let (size, errors) = walk.run();
+        print_result(p, size, &errors, &size_format, verbose);
+    }
 }
