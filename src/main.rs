@@ -1,4 +1,4 @@
-use std::path::{PathBuf};
+use std::path::PathBuf;
 
 use clap::{crate_name, crate_version, App, AppSettings, Arg};
 use humansize::file_size_opts::{self, FileSizeOpts};
@@ -57,6 +57,14 @@ fn main() {
                 .long("threads")
                 .short("j")
                 .value_name("N")
+                .takes_value(true)
+                .help("Set the number of threads (default: 3 x num cores)"),
+        )
+        .arg(
+            Arg::with_name("summarize")
+                .long("summarize")
+                .short("s")
+                .value_name("S")
                 .takes_value(true)
                 .help("Set the number of threads (default: 3 x num cores)"),
         )
